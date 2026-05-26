@@ -1,0 +1,185 @@
+@baseUrl = http://localhost:3000
+
+# ============================================
+# USERS MODULE - REST Client Tests
+# ============================================
+
+### [CREATE USER 1]
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "João Silva",
+  "email": "joao@example.com",
+  "password": "senha123",
+  "phone": "11999999999"
+}
+
+### [CREATE USER 2]
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Maria Santos",
+  "email": "maria@example.com",
+  "password": "senha456",
+  "phone": "11988888888"
+}
+
+### [READ ALL USERS]
+GET {{baseUrl}}/users
+
+### [READ USER BY ID 1 - Registro existente]
+# Status esperado: 200 OK
+# Copie o id de um usuário criado acima
+@userId = 1
+GET {{baseUrl}}/users/{{userId}}
+
+### [READ USER BY ID 2 - Registro inexistente]
+# Status esperado: 404 Not Found
+# Retorna erro descriptivo
+GET {{baseUrl}}/users/99999
+
+### [UPDATE USER]
+# Use o GET por ID antes e depois para confirmar persistência
+@userId = 1
+PATCH {{baseUrl}}/users/{{userId}}
+Content-Type: application/json
+
+{
+  "name": "João Silva Atualizado",
+  "phone": "11977777777"
+}
+
+### [DELETE USER]
+@userId = 2
+DELETE {{baseUrl}}/users/{{userId}}
+
+# ============================================
+# EVENTS MODULE - REST Client Tests
+# ============================================
+
+### [CREATE EVENT 1]
+POST {{baseUrl}}/events
+Content-Type: application/json
+
+{
+  "title": "Workshop de NestJS",
+  "description": "Aprenda os fundamentos do NestJS",
+  "eventDate": "2026-06-15T10:00:00Z",
+  "location": "São Paulo",
+  "capacity": 50
+}
+
+### [CREATE EVENT 2]
+POST {{baseUrl}}/events
+Content-Type: application/json
+
+{
+  "title": "Meetup de TypeScript",
+  "description": "Discussão sobre TypeScript avançado",
+  "eventDate": "2026-06-20T14:00:00Z",
+  "location": "Rio de Janeiro",
+  "capacity": 30
+}
+
+### [READ ALL EVENTS]
+GET {{baseUrl}}/events
+
+### [READ EVENT BY ID 1 - Registro existente]
+# Status esperado: 200 OK
+@eventId = 1
+GET {{baseUrl}}/events/{{eventId}}
+
+### [READ EVENT BY ID 2 - Registro inexistente]
+# Status esperado: 404 Not Found
+GET {{baseUrl}}/events/99999
+
+### [UPDATE EVENT]
+@eventId = 1
+PATCH {{baseUrl}}/events/{{eventId}}
+Content-Type: application/json
+
+{
+  "capacity": 100,
+  "location": "São Paulo - Auditório Principal"
+}
+
+### [DELETE EVENT]
+@eventId = 2
+DELETE {{baseUrl}}/events/{{eventId}}
+
+# ============================================
+# PAYMENTS MODULE - REST Client Tests
+# ============================================
+
+### [CREATE PAYMENT 1]
+POST {{baseUrl}}/payments
+Content-Type: application/json
+
+{
+  "userId": "1",
+  "amount": 99.90,
+  "paymentMethod": "credit_card",
+  "description": "Pagamento de inscrição no evento"
+}
+
+### [CREATE PAYMENT 2]
+POST {{baseUrl}}/payments
+Content-Type: application/json
+
+{
+  "userId": "1",
+  "amount": 49.90,
+  "paymentMethod": "debit_card",
+  "description": "Compra de material do curso"
+}
+
+### [READ ALL PAYMENTS]
+GET {{baseUrl}}/payments
+
+### [READ PAYMENT BY ID 1 - Registro existente]
+# Status esperado: 200 OK
+@paymentId = 1
+GET {{baseUrl}}/payments/{{paymentId}}
+
+### [READ PAYMENT BY ID 2 - Registro inexistente]
+# Status esperado: 404 Not Found
+GET {{baseUrl}}/payments/99999
+
+### [UPDATE PAYMENT]
+@paymentId = 1
+PATCH {{baseUrl}}/payments/{{paymentId}}
+Content-Type: application/json
+
+{
+  "status": "completed",
+  "transactionId": "TXN-2026-05-26-001"
+}
+
+### [DELETE PAYMENT]
+@paymentId = 2
+DELETE {{baseUrl}}/payments/{{paymentId}}
+
+# ============================================
+# CENÁRIOS INTEGRADOS DE TESTE
+# ============================================
+
+### [TESTE 3 - Confirmar atualização]
+# Use GET antes e depois de PATCH para validar persistência
+
+### Consulta ANTES
+@userId = 1
+GET {{baseUrl}}/users/{{userId}}
+
+### Atualiza
+PATCH {{baseUrl}}/users/{{userId}}
+Content-Type: application/json
+
+{
+  "name": "João Silva - Novo Nome",
+  "phone": "11977777777"
+}
+
+### Consulta DEPOIS
+GET {{baseUrl}}/users/{{userId}}

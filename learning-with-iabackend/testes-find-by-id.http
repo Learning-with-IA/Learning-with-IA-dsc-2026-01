@@ -1,0 +1,218 @@
+@baseUrl = http://localhost:3000
+
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║                  🎯 TESTES - BUSCA DETALHADA POR ID                       ║
+# ║          Implementação do Padrão GET /:id com TypeORM                     ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MÓDULO: USERS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+### [USERS] 1️⃣  Criar um usuário (obter UUID para teste)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "João Silva",
+  "email": "joao@example.com",
+  "password": "senha_segura_123",
+  "phone": "11999999999"
+}
+
+### [USERS] 2️⃣ Listar todos os usuários
+GET {{baseUrl}}/users
+
+###---------------------------------------------------------------------------
+### [USERS] TESTE 1 - GET /:id COM REGISTRO EXISTENTE
+### Status esperado: 200 OK
+### Retorna: Objeto completo do usuário
+###---------------------------------------------------------------------------
+# ⚠️ INSTRUÇÕES:
+#   1. Execute o teste acima (POST /users) para criar um usuário
+#   2. Copie o UUID do 'id' retornado
+#   3. Cole no campo abaixo: @userId
+@userId = 550e8400-e29b-41d4-a716-446655440000
+###
+GET {{baseUrl}}/users/{{userId}}
+
+###---------------------------------------------------------------------------
+### [USERS] TESTE 2 - GET /:id COM REGISTRO NÃO EXISTENTE (⚠️ 404)
+### Status esperado: 404 Not Found
+### Retorna: Mensagem de erro estruturada
+###---------------------------------------------------------------------------
+# Este UUID nunca existirá - deve retornar erro 404
+###
+GET {{baseUrl}}/users/00000000-0000-0000-0000-000000000000
+
+### [USERS] 3️⃣ Atualizar usuário
+PATCH {{baseUrl}}/users/{{userId}}
+Content-Type: application/json
+
+{
+  "name": "João Silva - Atualizado",
+  "phone": "11988888888"
+}
+
+### [USERS] 4️⃣ Deletar usuário
+DELETE {{baseUrl}}/users/{{userId}}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MÓDULO: EVENTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+### [EVENTS] 1️⃣ Criar um evento (obter UUID para teste)
+POST {{baseUrl}}/events
+Content-Type: application/json
+
+{
+  "title": "Workshop de NestJS Avançado",
+  "description": "Aprofunde seus conhecimentos em NestJS com padrões profissionais",
+  "eventDate": "2026-06-15T10:00:00Z",
+  "location": "São Paulo",
+  "capacity": 50
+}
+
+### [EVENTS] 2️⃣ Listar todos os eventos
+GET {{baseUrl}}/events
+
+###---------------------------------------------------------------------------
+### [EVENTS] TESTE 1 - GET /:id COM REGISTRO EXISTENTE
+### Status esperado: 200 OK
+### Retorna: Objeto completo do evento
+###---------------------------------------------------------------------------
+@eventId = 550e8400-e29b-41d4-a716-446655440001
+###
+GET {{baseUrl}}/events/{{eventId}}
+
+###---------------------------------------------------------------------------
+### [EVENTS] TESTE 2 - GET /:id COM REGISTRO NÃO EXISTENTE (⚠️ 404)
+### Status esperado: 404 Not Found
+### Retorna: Mensagem de erro estruturada
+###---------------------------------------------------------------------------
+###
+GET {{baseUrl}}/events/00000000-0000-0000-0000-000000000000
+
+### [EVENTS] 3️⃣ Atualizar evento
+PATCH {{baseUrl}}/events/{{eventId}}
+Content-Type: application/json
+
+{
+  "capacity": 100,
+  "location": "São Paulo - Centro de Convenções"
+}
+
+### [EVENTS] 4️⃣ Deletar evento
+DELETE {{baseUrl}}/events/{{eventId}}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MÓDULO: PAYMENTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+### [PAYMENTS] 1️⃣ Criar um pagamento (obter UUID para teste)
+POST {{baseUrl}}/payments
+Content-Type: application/json
+
+{
+  "userId": "550e8400-e29b-41d4-a716-446655440000",
+  "amount": 299.90,
+  "paymentMethod": "credit_card",
+  "description": "Inscrição no workshop de NestJS"
+}
+
+### [PAYMENTS] 2️⃣ Listar todos os pagamentos
+GET {{baseUrl}}/payments
+
+###---------------------------------------------------------------------------
+### [PAYMENTS] TESTE 1 - GET /:id COM REGISTRO EXISTENTE
+### Status esperado: 200 OK
+### Retorna: Objeto completo do pagamento
+###---------------------------------------------------------------------------
+@paymentId = 550e8400-e29b-41d4-a716-446655440002
+###
+GET {{baseUrl}}/payments/{{paymentId}}
+
+###---------------------------------------------------------------------------
+### [PAYMENTS] TESTE 2 - GET /:id COM REGISTRO NÃO EXISTENTE (⚠️ 404)
+### Status esperado: 404 Not Found
+### Retorna: Mensagem de erro estruturada
+###---------------------------------------------------------------------------
+###
+GET {{baseUrl}}/payments/00000000-0000-0000-0000-000000000000
+
+### [PAYMENTS] 3️⃣ Atualizar status do pagamento
+PATCH {{baseUrl}}/payments/{{paymentId}}
+Content-Type: application/json
+
+{
+  "status": "completed",
+  "transactionId": "TXN-2026-05-26-001"
+}
+
+### [PAYMENTS] 4️⃣ Deletar pagamento
+DELETE {{baseUrl}}/payments/{{paymentId}}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🎓 CENÁRIOS DE TESTE AVANÇADOS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+###---------------------------------------------------------------------------
+### CENÁRIO 1: Validar Atualização com GET ANTES/DEPOIS
+### Verifica se a alteração foi persistida no banco
+###---------------------------------------------------------------------------
+
+### GET ANTES da atualização
+GET {{baseUrl}}/users/{{userId}}
+
+###
+### PATCH - Atualiza
+PATCH {{baseUrl}}/users/{{userId}}
+Content-Type: application/json
+
+{
+  "name": "NOME APÓS ALTERAÇÃO"
+}
+
+###
+### GET DEPOIS - Confirma atualização
+GET {{baseUrl}}/users/{{userId}}
+
+###---------------------------------------------------------------------------
+### CENÁRIO 2: Validar Cascata de 404
+### Testa se DELETE retorna 404 após remover
+###---------------------------------------------------------------------------
+
+### DELETE o usuário
+DELETE {{baseUrl}}/users/{{userId}}
+
+###
+### GET DEPOIS do DELETE - Deve retornar 404
+GET {{baseUrl}}/users/{{userId}}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 📋 CHECKLIST DE VALIDAÇÃO
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# ✅ TESTE 1 (200 OK):
+#    □ Status HTTP: 200
+#    □ Corpo: Contém os dados do objeto
+#    □ Timestamp: createdAt, updatedAt presentes
+#    □ ID: Corresponde ao solicitado
+#
+# ✅ TESTE 2 (404 Not Found):
+#    □ Status HTTP: 404
+#    □ Corpo: { "statusCode": 404, "message": "...", "error": "Not Found" }
+#    □ Mensagem: Customizada e descritiva
+#    □ Sem retorno de null ou array vazio
+#
+# ✅ CONTROLLER:
+#    □ @Get(':id') declarado APÓS @Get()
+#    □ @Param('id') extrai corretamente
+#    □ Retorna Promise tipada
+#
+# ✅ SERVICE:
+#    □ repository.findOne({ where: { id } }) usado
+#    □ NotFoundException lançado se não encontrado
+#    □ Mensagem clara e contextualizada
+#
+# ═══════════════════════════════════════════════════════════════════════════════
