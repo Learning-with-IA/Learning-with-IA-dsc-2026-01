@@ -11,7 +11,7 @@ export class Event {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ type: 'timestamp', nullable: false })
+  @Column({ type: 'text', nullable: false })
   eventDate: Date;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -23,9 +23,9 @@ export class Event {
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn({ type: 'text' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp' })
+  @UpdateDateColumn({ type: 'text' })
   updatedAt: Date;
 }
