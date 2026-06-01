@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -10,14 +11,31 @@ import { User } from './modules/users/entities/user.entity';
 import { Event } from './modules/events/entities/event.entity';
 import { Payment } from './modules/payments/entities/payment.entity';
 import { Curso } from './modules/cursos/entities/curso.entity';
+import { CursoConteudo } from './modules/cursos/entities/curso-conteudo.entity';
+import { CursoAgente } from './modules/cursos/entities/curso-agente.entity';
+import { LogInteracao } from './modules/cursos/entities/log-interacao.entity';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     TypeOrmModule.forRoot({
-      type: 'sqljs',
-      location: process.env.NODE_ENV === 'test' ? ':memory:' : 'database.sqlite',
-      autoSave: process.env.NODE_ENV !== 'test',
-      entities: [User, Event, Payment, Curso],
+      type: 'postgres',
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432'),
+      username: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || 'postgres',
+      database: process.env.DB_NAME || 'learning_db',
+      entities: [
+        User,
+        Event,
+        Payment,
+        Curso,
+        CursoConteudo,
+        CursoAgente,
+        LogInteracao,
+      ],
       synchronize: true,
       logging: false,
     }),

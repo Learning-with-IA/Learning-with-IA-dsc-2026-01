@@ -1,98 +1,205 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🚀 Learning with AI - Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Plataforma inteligente de aprendizado que oferece suporte educacional 24/7 através de **agentes de IA calibrados com conteúdo dos cursos**.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🎯 Objetivo Principal
 
-## Description
+Cada curso tem um **agente de IA (LLM Notebook)** que:
+- ✅ É carregado **apenas** com conteúdo do curso
+- ✅ Responde perguntas dos alunos baseado em materiais didáticos
+- ✅ Registra histórico de interações para análise
+- ✅ Valida acesso apenas para alunos com matrícula ativa
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🏗️ Arquitetura
 
-## Project setup
-
-```bash
-$ pnpm install
+```
+Requisição HTTP
+    ↓
+Controller (valida entrada)
+    ↓
+Service (orquestra lógica)
+    ↓
+Repository (TypeORM)
+    ↓
+PostgreSQL
 ```
 
-## Compile and run the project
+### 🤖 Fluxo do Agente de IA
 
-```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+```
+1. Aluno faz pergunta → POST /cursos/:id/agente/query
+2. Controller obtém agente + conteúdo do curso
+3. AgenteIAService carrega conteúdo como contexto
+4. LLM processa pergunta + contexto
+5. Resposta é retornada + registrada em LogInteracao
+6. Cliente recebe resposta + metadados
 ```
 
-## Run tests
+## 📦 Estrutura de Módulos
 
-```bash
-# unit tests
-$ pnpm run test
+### `users/`
+- CRUD de usuários (alunos/professores)
+- Validação de dados com DTOs
 
-# e2e tests
-$ pnpm run test:e2e
+### `events/`
+- Gerenciamento de eventos acadêmicos
+- Calendário de aulas
 
-# test coverage
-$ pnpm run test:cov
+### `payments/`
+- Histórico de pagamentos/matrículas
+- Suporte para cursos gratuitos (RN03)
+
+### `cursos/` ⭐ PRINCIPAL
+```
+cursos/
+├── entities/
+│   ├── curso.entity.ts           → Informações do curso
+│   ├── curso-conteudo.entity.ts  → Materiais (texto, video, etc)
+│   ├── curso-agente.entity.ts    → Configuração do agente de IA
+│   └── log-interacao.entity.ts   → Rastreamento de queries
+├── dto/
+│   ├── curso-response.dto.ts
+│   ├── curso-conteudo.dto.ts
+│   └── curso-agente.dto.ts
+├── services/
+│   ├── agente-ia.service.ts      → 🤖 Integração com LLM
+│   └── (cursos.service.ts já em raiz do módulo)
+├── cursos.service.ts              → Orquestração principal
+├── cursos.controller.ts           → Endpoints
+└── cursos.module.ts              → Configuração
 ```
 
-## Deployment
+## 🔌 Endpoints Principais
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+### Listar Cursos
+```http
+GET /api/v1/cursos
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Gerenciar Conteúdo do Curso
+```http
+POST   /api/v1/cursos/:cursoId/conteudo       → Adicionar material
+GET    /api/v1/cursos/:cursoId/conteudo       → Listar materiais
+PATCH  /api/v1/cursos/:cursoId/conteudo/:id  → Atualizar material
+DELETE /api/v1/cursos/:cursoId/conteudo/:id  → Deletar material
+```
 
-## Resources
+### Agente de IA
+```http
+POST   /api/v1/cursos/:cursoId/agente/inicializar    → Criar agente
+GET    /api/v1/cursos/:cursoId/agente                → Obter config
+POST   /api/v1/cursos/:cursoId/agente/query          → Query (❌ MOCK)
+GET    /api/v1/cursos/:cursoId/agente/historico/:uid → Histórico
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+## 🛠️ Modelos de IA Suportados
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+| Modelo | Status | Integração |
+|--------|--------|-----------|
+| GPT-4 | 🚧 TODO | OpenAI API |
+| GPT-3.5 | 🚧 TODO | OpenAI API |
+| Claude | 🚧 TODO | Anthropic API |
+| LLAMA | 🚧 TODO | HuggingFace / Local |
+| Custom | 🚧 TODO | Extensível |
 
-## Support
+> ⚠️ **Atualmente**: Respostas são simuladas (mock). Integração com LLM está scaffolded em `agente-ia.service.ts`
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## 🚀 Como Rodar
 
-## Stay in touch
+### Requisitos
+- Node.js 20+
+- Docker + Docker Compose
+- pnpm
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Iniciar
+```bash
+# Instalar dependências
+pnpm install
 
-## License
+# Rodar com Docker
+docker-compose build --no-cache
+docker-compose up
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+# Ou localmente
+pnpm start:dev
+```
+
+### Testar
+```bash
+# Listar cursos
+curl http://localhost:3000/api/v1/cursos
+
+# Query agente (mock)
+curl -X POST http://localhost:3000/api/v1/cursos/<id>/agente/query \
+  -H "Content-Type: application/json" \
+  -d '{"pergunta": "O que é programação?"}'
+```
+
+## 📋 Checklist de Implementação
+
+- ✅ Entidades TypeORM criadas
+- ✅ DTOs para validação
+- ✅ Service com lógica de orquestração
+- ✅ Controller com endpoints
+- ✅ Scaffolding de integração com IA
+- 🚧 Integração com OpenAI/Claude/LLAMA
+- 🚧 Autenticação de alunos
+- 🚧 Guards de autorização (RN01)
+- 🚧 Rate limiting
+- 🚧 Testes unitários
+- 🚧 Testes E2E
+
+## 🔐 Regras de Negócio
+
+**RN01**: Apenas alunos com matrícula ativa podem usar o agente
+- 🚧 TODO: Validar status de matrícula antes de query
+
+**RN03**: Todos os cursos são gratuitos
+- ✅ Implementado no Payment
+
+## 📚 Próximos Passos
+
+1. **Autenticação JWT** → Adicionar guards para validar token
+2. **Integração LLM** → Implementar chamadas reais aos modelos
+3. **Cache de Respostas** → Redis para respostas frequentes
+4. **Validação de Contexto** → Garantir resposta dentro do escopo
+5. **Testes** → Unit + E2E completos
+6. **API Docs** → Swagger/OpenAPI
+
+## 📝 Variáveis de Ambiente
+
+```env
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=learning_db
+
+# OpenAI
+OPENAI_API_KEY=sk_...
+
+# Anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+
+# LLAMA (se usar local)
+LLAMA_HOST=http://localhost:8000
+```
+
+## 👥 Arquitetura Organizacional
+
+```
+Aluno (User)
+    ↓ matricula-se em
+    Curso
+        ↓ possui
+        CursoConteudo (Materiais)
+        ↓ alimenta
+        CursoAgente (IA)
+        ↓ responde queries
+        LogInteracao (Histórico)
+```
+
+---
+
+**Desenvolvido com ❤️ usando NestJS + TypeORM + PostgreSQL**
