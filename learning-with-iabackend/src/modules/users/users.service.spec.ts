@@ -1,8 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { User } from './entities/user.entity';
+import { User, UserRole } from './entities/user.entity';
 import { IUserRepository } from './repositories/user.repository.interface';
+import * as bcrypt from 'bcrypt';
+
+jest.mock('bcrypt');
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -12,9 +15,12 @@ describe('UsersService', () => {
     id: 'user-id-1',
     name: 'John Doe',
     email: 'john@example.com',
-    password: 'password123',
+    password: 'hashedpassword',
     phone: '12345678',
+    role: UserRole.STUDENT,
     isActive: true,
+    recoveryToken: null,
+    recoveryTokenExpires: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -26,6 +32,7 @@ describe('UsersService', () => {
       buscarPorId: jest.fn(),
       buscarPorEmail: jest.fn(),
       remover: jest.fn(),
+      buscarComFiltros: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -41,24 +48,54 @@ describe('UsersService', () => {
     service = module.get<UsersService>(UsersService);
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('create', () => {
-    it('deve cadastrar um novo usuário', async () => {
-      const dto = { name: 'John Doe', email: 'john@example.com', password: 'password123' };
+    it('deve cadastrar um novo usuário criptografando a senha', async () => {
+      const dto = {
+        name: 'John Doe',
+        email: 'john@example.com',
+        password: 'password123',
+        role: UserRole.TEACHER,
+      };
+
+      (bcrypt.hash as jest.Mock).mockResolvedValueOnce('hashedpassword');
       mockUserRepository.salvar.mockResolvedValueOnce(mockUser);
 
       const result = await service.create(dto);
       expect(result).toEqual(mockUser);
-      expect(mockUserRepository.salvar).toHaveBeenCalledWith(dto);
+      expect(bcrypt.hash).toHaveBeenCalledWith(dto.password, 10);
+      expect(mockUserRepository.salvar).toHaveBeenCalledWith(
+        expect.objectContaining({
+          password: 'hashedpassword',
+          role: UserRole.TEACHER,
+        }),
+      );
     });
   });
 
-  describe('findAll', () => {
-    it('deve retornar todos os usuários', async () => {
-      mockUserRepository.buscarTodos.mockResolvedValueOnce([mockUser]);
+  describe('findPaginated', () => {
+    it('deve retornar listagem de usuários paginada com total', async () => {
+      const filtros = { page: 1, limit: 10, name: 'John' };
+      mockUserRepository.buscarComFiltros.mockResolvedValueOnce({
+        data: [mockUser],
+        total: 1,
+      });
 
-      const result = await service.findAll();
-      expect(result).toEqual([mockUser]);
-      expect(mockUserRepository.buscarTodos).toHaveBeenCalled();
+      const result = await service.findPaginated(filtros);
+
+      expect(result).toEqual({
+        data: [mockUser],
+        meta: {
+          total: 1,
+          page: 1,
+          limit: 10,
+          pages: 1,
+        },
+      });
+      expect(mockUserRepository.buscarComFiltros).toHaveBeenCalledWith(filtros);
     });
   });
 
@@ -79,14 +116,48 @@ describe('UsersService', () => {
   });
 
   describe('update', () => {
-    it('deve atualizar um usuário existente', async () => {
-      const dto = { name: 'John Updated' };
+    it('deve atualizar um usuário existente ignorando email e password', async () => {
+      const dto = {
+        name: 'John Updated',
+        email: 'attacker@example.com',
+        password: 'attackpassword',
+      };
+
       mockUserRepository.buscarPorId.mockResolvedValueOnce(mockUser);
-      mockUserRepository.salvar.mockResolvedValueOnce({ ...mockUser, name: 'John Updated' });
+      mockUserRepository.salvar.mockResolvedValueOnce({
+        ...mockUser,
+        name: 'John Updated',
+      });
 
       const result = await service.update('user-id-1', dto);
+
       expect(result.name).toBe('John Updated');
-      expect(mockUserRepository.salvar).toHaveBeenCalled();
+      expect(mockUserRepository.salvar).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'John Updated',
+          email: mockUser.email,       // e-mail original inalterado
+          password: mockUser.password, // senha original inalterada
+        }),
+      );
+    });
+  });
+
+  describe('updateStatus', () => {
+    it('deve alternar o status de atividade (isActive) do usuário', async () => {
+      mockUserRepository.buscarPorId.mockResolvedValueOnce(mockUser);
+      mockUserRepository.salvar.mockResolvedValueOnce({
+        ...mockUser,
+        isActive: false,
+      });
+
+      const result = await service.updateStatus('user-id-1', false);
+
+      expect(result.isActive).toBe(false);
+      expect(mockUserRepository.salvar).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isActive: false,
+        }),
+      );
     });
   });
 
