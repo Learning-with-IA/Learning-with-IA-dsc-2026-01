@@ -8,6 +8,7 @@ import { EventsModule } from './modules/events/events.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { CursosModule } from './modules/cursos/cursos.module';
 import { MatriculasModule } from './modules/matriculas/matriculas.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { User } from './modules/users/entities/user.entity';
 import { Event } from './modules/events/entities/event.entity';
 import { Payment } from './modules/payments/entities/payment.entity';
@@ -47,6 +48,7 @@ import { Matricula } from './modules/matriculas/entities/matricula.entity';
     PaymentsModule,
     CursosModule,
     MatriculasModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
