@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsNumber, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsNumber, Min, Max, IsUUID } from 'class-validator';
 import { ModeloIA } from '../entities/curso-agente.entity';
 
 export class CreateCursoAgenteDto {
@@ -26,6 +26,10 @@ export class CreateCursoAgenteDto {
 export class QueryAgenteDto {
   @IsString()
   pergunta: string;
+
+  @IsUUID()
+  @IsOptional()
+  usuarioId?: string;
 }
 
 export class CursoAgenteResponseDto {

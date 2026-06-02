@@ -21,7 +21,7 @@ describe('CursosController (e2e)', () => {
 
     dataSource = app.get(DataSource);
     const repository = dataSource.getRepository(Curso);
-    await repository.clear();
+    await repository.query('TRUNCATE TABLE "cursos" CASCADE;');
 
     await repository.save([
       repository.create({

@@ -1,35 +1,28 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { Payment } from './entities/payment.entity';
 import { CreatePaymentDto, UpdatePaymentDto } from './dto/payment.dto';
+import type { IPaymentRepository } from './repositories/payment.repository.interface';
 
 @Injectable()
 export class PaymentsService {
   constructor(
-    @InjectRepository(Payment)
-    private readonly paymentsRepository: Repository<Payment>,
+    @Inject('IPaymentRepository')
+    private readonly paymentsRepository: IPaymentRepository,
   ) {}
 
   // CREATE - POST /payments
   async create(createPaymentDto: CreatePaymentDto): Promise<Payment> {
-    const payment = this.paymentsRepository.create(createPaymentDto);
-    return await this.paymentsRepository.save(payment);
+    return this.paymentsRepository.salvar(createPaymentDto);
   }
 
   // READ ALL - GET /payments
   async findAll(): Promise<Payment[]> {
-    return await this.paymentsRepository.find();
+    return this.paymentsRepository.buscarTodos();
   }
 
   // READ BY ID - GET /payments/:id
-  // 🎯 ENDPOINT PRINCIPAL: Busca um pagamento específico
-  // ✅ Usa repository.findOne() com where clause
-  // ✅ Lança NotFoundException se não encontrado (HTTP 404)
   async findOne(id: string): Promise<Payment> {
-    const payment = await this.paymentsRepository.findOne({
-      where: { id },
-    });
+    const payment = await this.paymentsRepository.buscarPorId(id);
 
     if (!payment) {
       throw new NotFoundException(
@@ -47,13 +40,13 @@ export class PaymentsService {
   ): Promise<Payment> {
     const payment = await this.findOne(id);
     Object.assign(payment, updatePaymentDto);
-    return await this.paymentsRepository.save(payment);
+    return this.paymentsRepository.salvar(payment);
   }
 
   // DELETE - DELETE /payments/:id
   async remove(id: string): Promise<{ message: string }> {
     const payment = await this.findOne(id);
-    await this.paymentsRepository.remove(payment);
+    await this.paymentsRepository.remover(payment);
     return { message: `Pagamento com ID "${id}" removido com sucesso.` };
   }
 }

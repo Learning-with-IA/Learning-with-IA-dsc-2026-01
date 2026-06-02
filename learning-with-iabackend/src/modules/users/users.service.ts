@@ -1,38 +1,29 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import type { IUserRepository } from './repositories/user.repository.interface';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
+    @Inject('IUserRepository')
+    private readonly usersRepository: IUserRepository,
   ) {}
 
   // CREATE - POST /users
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const user = this.usersRepository.create(createUserDto);
-    return await this.usersRepository.save(user);
+    return this.usersRepository.salvar(createUserDto);
   }
 
   // READ ALL - GET /users
-  // Retorna uma coleção de registros
   async findAll(): Promise<User[]> {
-    return await this.usersRepository.find();
+    return this.usersRepository.buscarTodos();
   }
 
   // READ BY ID - GET /users/:id
-  // 🎯 ENDPOINT PRINCIPAL: Busca um usuário específico
-  // ✅ Usa repository.findOne() com where clause
-  // ✅ Lança NotFoundException se não encontrado (HTTP 404)
   async findOne(id: string): Promise<User> {
-    const user = await this.usersRepository.findOne({
-      where: { id },
-    });
+    const user = await this.usersRepository.buscarPorId(id);
 
-    // Validação: se não encontrar, lança erro 404
     if (!user) {
       throw new NotFoundException(
         `Usuário com ID "${id}" não foi encontrado.`,
@@ -47,21 +38,15 @@ export class UsersService {
     id: string,
     updateUserDto: UpdateUserDto,
   ): Promise<User> {
-    // Primeiro valida se o usuário existe
-    const user = await this.findOne(id); // Isto já lança NotFoundException se não existe
-
-    // Depois atualiza
+    const user = await this.findOne(id);
     Object.assign(user, updateUserDto);
-    return await this.usersRepository.save(user);
+    return this.usersRepository.salvar(user);
   }
 
   // DELETE - DELETE /users/:id
   async remove(id: string): Promise<{ message: string }> {
-    // Primeiro valida se o usuário existe
-    const user = await this.findOne(id); // Isto já lança NotFoundException se não existe
-
-    // Depois deleta
-    await this.usersRepository.remove(user);
+    const user = await this.findOne(id);
+    await this.usersRepository.remover(user);
     return { message: `Usuário com ID "${id}" removido com sucesso.` };
   }
 }

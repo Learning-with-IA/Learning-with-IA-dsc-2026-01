@@ -15,6 +15,7 @@ import { CursoTypeOrmRepository } from './repositories/typeorm/curso.typeorm.rep
 import { CursoConteudoTypeOrmRepository } from './repositories/typeorm/curso-conteudo.typeorm.repository';
 import { CursoAgenteTypeOrmRepository } from './repositories/typeorm/curso-agente.typeorm.repository';
 import { LogInteracaoTypeOrmRepository } from './repositories/typeorm/log-interacao.typeorm.repository';
+import { MatriculasModule } from '../matriculas/matriculas.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { LogInteracaoTypeOrmRepository } from './repositories/typeorm/log-intera
       CursoAgente,
       LogInteracao,
     ]),
+    MatriculasModule,
   ],
   controllers: [CursosController],
   providers: [

@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, HttpCode, HttpStatus, ForbiddenException } from '@nestjs/common';
 import { CursosService } from './cursos.service';
 import { AgenteIAService } from './services/agente-ia.service';
+import { MatriculasService } from '../matriculas/matriculas.service';
 import { CursoResponseDto } from './dto/curso-response.dto';
 import { CreateCursoConteudoDto, UpdateCursoConteudoDto, CursoConteudoResponseDto } from './dto/curso-conteudo.dto';
 import { CreateCursoAgenteDto, QueryAgenteDto, CursoAgenteResponseDto, RespostaAgenteDto } from './dto/curso-agente.dto';
@@ -10,6 +11,7 @@ export class CursosController {
   constructor(
     private readonly cursosService: CursosService,
     private readonly agenteIAService: AgenteIAService,
+    private readonly matriculasService: MatriculasService,
   ) {}
 
   // ========== CURSOS ==========
@@ -136,11 +138,27 @@ export class CursosController {
     @Param('cursoId') cursoId: string,
     @Body() dto: QueryAgenteDto,
   ): Promise<RespostaAgenteDto> {
+    const usuarioId = dto.usuarioId;
+    if (usuarioId) {
+      const temMatricula = await this.matriculasService.verificarMatriculaAtiva(usuarioId, cursoId);
+      if (!temMatricula) {
+        throw new ForbiddenException('Apenas alunos com matrícula ativa podem usar o agente');
+      }
+    }
+
     const agente = await this.cursosService.obterAgente(cursoId);
     const resposta = await this.agenteIAService.queryAgente(agente, dto.pergunta);
 
-    // TODO: Registrar interação quando user_id estiver disponível via guard/middleware
-    // await this.cursosService.registrarInteracao(userId, cursoId, ...);
+    if (usuarioId) {
+      await this.cursosService.registrarInteracao(
+        usuarioId,
+        cursoId,
+        dto.pergunta,
+        resposta.resposta,
+        resposta.confianca,
+        resposta.tempoResposta,
+      );
+    }
 
     return resposta;
   }

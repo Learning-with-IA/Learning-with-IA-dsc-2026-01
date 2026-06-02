@@ -1,35 +1,28 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { Event } from './entities/event.entity';
 import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
+import type { IEventRepository } from './repositories/event.repository.interface';
 
 @Injectable()
 export class EventsService {
   constructor(
-    @InjectRepository(Event)
-    private readonly eventsRepository: Repository<Event>,
+    @Inject('IEventRepository')
+    private readonly eventsRepository: IEventRepository,
   ) {}
 
   // CREATE - POST /events
   async create(createEventDto: CreateEventDto): Promise<Event> {
-    const event = this.eventsRepository.create(createEventDto);
-    return await this.eventsRepository.save(event);
+    return this.eventsRepository.salvar(createEventDto);
   }
 
   // READ ALL - GET /events
   async findAll(): Promise<Event[]> {
-    return await this.eventsRepository.find();
+    return this.eventsRepository.buscarTodos();
   }
 
   // READ BY ID - GET /events/:id
-  // 🎯 ENDPOINT PRINCIPAL: Busca um evento específico
-  // ✅ Usa repository.findOne() com where clause
-  // ✅ Lança NotFoundException se não encontrado (HTTP 404)
   async findOne(id: string): Promise<Event> {
-    const event = await this.eventsRepository.findOne({
-      where: { id },
-    });
+    const event = await this.eventsRepository.buscarPorId(id);
 
     if (!event) {
       throw new NotFoundException(
@@ -47,13 +40,13 @@ export class EventsService {
   ): Promise<Event> {
     const event = await this.findOne(id);
     Object.assign(event, updateEventDto);
-    return await this.eventsRepository.save(event);
+    return this.eventsRepository.salvar(event);
   }
 
   // DELETE - DELETE /events/:id
   async remove(id: string): Promise<{ message: string }> {
     const event = await this.findOne(id);
-    await this.eventsRepository.remove(event);
+    await this.eventsRepository.remover(event);
     return { message: `Evento com ID "${id}" removido com sucesso.` };
   }
 }

@@ -7,6 +7,7 @@ import { UsersModule } from './modules/users/users.module';
 import { EventsModule } from './modules/events/events.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { CursosModule } from './modules/cursos/cursos.module';
+import { MatriculasModule } from './modules/matriculas/matriculas.module';
 import { User } from './modules/users/entities/user.entity';
 import { Event } from './modules/events/entities/event.entity';
 import { Payment } from './modules/payments/entities/payment.entity';
@@ -14,6 +15,7 @@ import { Curso } from './modules/cursos/entities/curso.entity';
 import { CursoConteudo } from './modules/cursos/entities/curso-conteudo.entity';
 import { CursoAgente } from './modules/cursos/entities/curso-agente.entity';
 import { LogInteracao } from './modules/cursos/entities/log-interacao.entity';
+import { Matricula } from './modules/matriculas/entities/matricula.entity';
 
 @Module({
   imports: [
@@ -35,6 +37,7 @@ import { LogInteracao } from './modules/cursos/entities/log-interacao.entity';
         CursoConteudo,
         CursoAgente,
         LogInteracao,
+        Matricula,
       ],
       synchronize: true,
       logging: false,
@@ -43,6 +46,7 @@ import { LogInteracao } from './modules/cursos/entities/log-interacao.entity';
     EventsModule,
     PaymentsModule,
     CursosModule,
+    MatriculasModule,
   ],
   controllers: [AppController],
   providers: [AppService],
