@@ -31,7 +31,7 @@ export class LogInteracao {
   confianca: number; // Confiança da resposta (0-1)
 
   @Column({ type: 'text', nullable: true })
-  fontes: string; // JSON com fontes de informação usadas
+  fontes: string | null; // JSON com fontes de informação usadas
 
   @Column({ type: 'int', default: 0 })
   tempoResposta: number; // Tempo em ms
