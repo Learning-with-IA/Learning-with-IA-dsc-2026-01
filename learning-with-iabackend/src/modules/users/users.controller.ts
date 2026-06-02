@@ -6,66 +6,110 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
+  UseGuards,
+  Req,
+  ForbiddenException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
-import { User } from './entities/user.entity';
+import { CreateUserDto, UpdateUserDto, GetUsersFilterDto } from './dto/user.dto';
+import { User, UserRole } from './entities/user.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
-@Controller('users')
+@ApiTags('Users')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller('api/v1/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   // ================================================
-  // CREATE - POST /users
+  // CREATE - POST /api/v1/users
   // ================================================
   @Post()
+  @Roles(UserRole.ADMIN)
+  @UseGuards(RolesGuard)
+  @ApiOperation({ summary: 'Criar usuário administrativamente (Apenas ADMIN)' })
+  @ApiResponse({ status: 201, description: 'Usuário criado com sucesso.' })
+  @ApiResponse({ status: 403, description: 'Acesso proibido.' })
   create(@Body() createUserDto: CreateUserDto): Promise<User> {
     return this.usersService.create(createUserDto);
   }
 
   // ================================================
-  // READ ALL - GET /users
+  // READ PAGINATED - GET /api/v1/users
   // ================================================
-  // Retorna uma COLEÇÃO de registros
-  // Útil para: listar, filtrar, paginar
   @Get()
-  findAll(): Promise<User[]> {
-    return this.usersService.findAll();
+  @Roles(UserRole.ADMIN)
+  @UseGuards(RolesGuard)
+  @ApiOperation({ summary: 'Listar usuários com filtros e paginação (Apenas ADMIN)' })
+  @ApiResponse({ status: 200, description: 'Lista paginada retornada com sucesso.' })
+  findPaginated(@Query() query: GetUsersFilterDto) {
+    return this.usersService.findPaginated(query);
   }
 
   // ================================================
-  // READ BY ID - GET /users/:id
+  // READ BY ID - GET /api/v1/users/:id
   // ================================================
-  // 🎯 ENDPOINT PRINCIPAL DO SEU PROFESSOR
-  // Retorna um ITEM ÚNICO específico
-  // Valida se existe → 200 OK
-  // Não encontrado → 404 Not Found
-  //
-  // ✅ @Param('id') extrai o ID da rota
-  // ✅ Controller recebe e delega ao service
-  // ✅ Service busca com repository.findOne({ where: { id } })
-  // ✅ Service lança NotFoundException se não encontrado
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<User> {
+  @ApiOperation({ summary: 'Obter dados de um usuário por ID (ADMIN ou Próprio Usuário)' })
+  @ApiResponse({ status: 200, description: 'Dados do usuário retornados com sucesso.' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
+  findOne(@Param('id') id: string, @Req() req: any): Promise<User> {
+    if (req.user.role !== UserRole.ADMIN && req.user.id !== id) {
+      throw new ForbiddenException('Acesso negado. Você só pode visualizar seu próprio perfil.');
+    }
     return this.usersService.findOne(id);
   }
 
   // ================================================
-  // UPDATE - PATCH /users/:id
+  // UPDATE - PATCH /api/v1/users/:id
   // ================================================
   @Patch(':id')
+  @ApiOperation({ summary: 'Atualizar dados cadastrais (ADMIN ou Próprio Usuário)' })
+  @ApiResponse({ status: 200, description: 'Dados atualizados com sucesso.' })
+  @ApiResponse({ status: 403, description: 'Acesso negado.' })
   update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @Req() req: any,
   ): Promise<User> {
+    if (req.user.role !== UserRole.ADMIN && req.user.id !== id) {
+      throw new ForbiddenException('Acesso negado. Você só pode editar seu próprio perfil.');
+    }
     return this.usersService.update(id, updateUserDto);
   }
 
   // ================================================
-  // DELETE - DELETE /users/:id
+  // UPDATE STATUS - PATCH /api/v1/users/:id/status
+  // ================================================
+  @Patch(':id/status')
+  @Roles(UserRole.ADMIN)
+  @UseGuards(RolesGuard)
+  @ApiOperation({ summary: 'Ativar/Desativar usuário administrativamente (Apenas ADMIN)' })
+  @ApiResponse({ status: 200, description: 'Status atualizado com sucesso.' })
+  @ApiResponse({ status: 403, description: 'Acesso negado.' })
+  updateStatus(
+    @Param('id') id: string,
+    @Body('isActive') isActive: boolean,
+  ): Promise<User> {
+    return this.usersService.updateStatus(id, isActive);
+  }
+
+  // ================================================
+  // DELETE - DELETE /api/v1/users/:id
   // ================================================
   @Delete(':id')
-  remove(@Param('id') id: string): Promise<{ message: string }> {
+  @ApiOperation({ summary: 'Remover usuário da plataforma (ADMIN ou Próprio Usuário)' })
+  @ApiResponse({ status: 200, description: 'Usuário removido com sucesso.' })
+  @ApiResponse({ status: 403, description: 'Acesso negado.' })
+  remove(@Param('id') id: string, @Req() req: any): Promise<{ message: string }> {
+    if (req.user.role !== UserRole.ADMIN && req.user.id !== id) {
+      throw new ForbiddenException('Acesso negado. Você só pode remover sua própria conta.');
+    }
     return this.usersService.remove(id);
   }
 }
