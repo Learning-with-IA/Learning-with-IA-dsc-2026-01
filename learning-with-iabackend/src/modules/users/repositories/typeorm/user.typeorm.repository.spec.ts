@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserTypeOrmRepository } from './user.typeorm.repository';
-import { User } from '../../entities/user.entity';
+import { User, UserRole } from '../../entities/user.entity';
 import { IUserRepository } from '../user.repository.interface';
 
 describe('UserTypeOrmRepository', () => {
@@ -32,6 +32,7 @@ describe('UserTypeOrmRepository', () => {
             find: jest.fn(),
             findOne: jest.fn(),
             remove: jest.fn(),
+            createQueryBuilder: jest.fn(),
           },
         },
       ],
@@ -80,6 +81,30 @@ describe('UserTypeOrmRepository', () => {
 
     await repository.remover(mockUser);
     expect(mockTypeOrmRepository.remove).toHaveBeenCalledWith(mockUser);
+  });
+
+  it('deve buscar com filtros', async () => {
+    const mockQueryBuilder = {
+      andWhere: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getManyAndCount: jest.fn().mockResolvedValueOnce([[mockUser], 1]),
+    };
+    mockTypeOrmRepository.createQueryBuilder.mockReturnValueOnce(mockQueryBuilder as any);
+
+    const result = await repository.buscarComFiltros({
+      name: 'John',
+      email: 'john@example.com',
+      role: UserRole.STUDENT,
+      isActive: true,
+    });
+
+    expect(result).toEqual({ data: [mockUser], total: 1 });
+    expect(mockTypeOrmRepository.createQueryBuilder).toHaveBeenCalledWith('user');
+    expect(mockQueryBuilder.andWhere).toHaveBeenCalledTimes(4);
+    expect(mockQueryBuilder.skip).toHaveBeenCalledWith(0);
+    expect(mockQueryBuilder.take).toHaveBeenCalledWith(10);
+    expect(mockQueryBuilder.getManyAndCount).toHaveBeenCalled();
   });
 
   it('deve implementar IUserRepository', () => {
