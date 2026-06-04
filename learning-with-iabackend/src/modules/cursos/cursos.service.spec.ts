@@ -315,6 +315,49 @@ describe('CursosService', () => {
       expect(result).toEqual(logMock);
       expect(mockLogRepository.salvarLog).toHaveBeenCalled();
     });
+
+    it('deve registrar uma interação com sessionId', async () => {
+      const logMockWithSession: LogInteracao = {
+        id: '55555555-5555-5555-5555-555555555555',
+        usuarioId: 'user-1',
+        cursoId: cursoAtivo.id,
+        pergunta: 'Qual é o tema?',
+        resposta: 'O tema é...',
+        confianca: 0.9,
+        fontes: null,
+        tempoResposta: 100,
+        sessionId: 'session-abc-123',
+        criadoEm: new Date(),
+        usuario: {} as any,
+        curso: cursoAtivo,
+      } as any;
+
+      mockLogRepository.salvarLog.mockResolvedValueOnce(logMockWithSession);
+
+      // @ts-ignore
+      const result = await service.registrarInteracao(
+        'user-1',
+        cursoAtivo.id,
+        'Qual é o tema?',
+        'O tema é...',
+        0.9,
+        100,
+        'session-abc-123',
+      );
+
+      expect(result).toEqual(logMockWithSession);
+      expect(mockLogRepository.salvarLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          usuarioId: 'user-1',
+          cursoId: cursoAtivo.id,
+          pergunta: 'Qual é o tema?',
+          resposta: 'O tema é...',
+          confianca: 0.9,
+          tempoResposta: 100,
+          sessionId: 'session-abc-123',
+        }),
+      );
+    });
   });
 
   describe('obterHistorico', () => {
