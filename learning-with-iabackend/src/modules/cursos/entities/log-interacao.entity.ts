@@ -36,6 +36,9 @@ export class LogInteracao {
   @Column({ type: 'int', default: 0 })
   tempoResposta: number; // Tempo em ms
 
+  @Column({ type: 'varchar', length: 255, name: 'session_id', nullable: true })
+  sessionId: string | null;
+
   @CreateDateColumn({ name: 'criado_em' })
   criadoEm: Date;
 }
