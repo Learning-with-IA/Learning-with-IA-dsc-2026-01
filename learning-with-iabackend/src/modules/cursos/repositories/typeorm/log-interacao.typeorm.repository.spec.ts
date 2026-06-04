@@ -18,6 +18,7 @@ describe('LogInteracaoTypeOrmRepository', () => {
     confianca: 0.9,
     fontes: null,
     tempoResposta: 100,
+    sessionId: 'session-123',
     criadoEm: new Date(),
   };
 
@@ -53,6 +54,7 @@ describe('LogInteracaoTypeOrmRepository', () => {
         resposta: 'Resposta',
         confianca: 0.8,
         tempoResposta: 100,
+        sessionId: 'session-123',
       };
 
       mockTypeOrmRepository.create.mockReturnValueOnce(logMock);
