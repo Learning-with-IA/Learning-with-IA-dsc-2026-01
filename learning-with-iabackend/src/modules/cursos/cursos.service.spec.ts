@@ -334,7 +334,6 @@ describe('CursosService', () => {
 
       mockLogRepository.salvarLog.mockResolvedValueOnce(logMockWithSession);
 
-      // @ts-ignore
       const result = await service.registrarInteracao(
         'user-1',
         cursoAtivo.id,

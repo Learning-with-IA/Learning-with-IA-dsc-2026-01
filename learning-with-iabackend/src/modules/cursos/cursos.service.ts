@@ -126,6 +126,7 @@ Responda com base APENAS no conteúdo do curso fornecido. Se a pergunta não pud
     resposta: string,
     confianca: number = 0.8,
     tempoResposta: number = 0,
+    sessionId: string | null = null,
   ): Promise<LogInteracao> {
     return this.logRepository.salvarLog({
       usuarioId,
@@ -134,6 +135,7 @@ Responda com base APENAS no conteúdo do curso fornecido. Se a pergunta não pud
       resposta,
       confianca,
       tempoResposta,
+      sessionId,
     });
   }
 
