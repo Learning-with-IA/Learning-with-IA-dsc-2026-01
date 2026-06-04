@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CursosController } from './cursos.controller';
+import { IaController } from './ia.controller';
 import { CursosService } from './cursos.service';
 import { AgenteIAService } from './services/agente-ia.service';
 import { Curso } from './entities/curso.entity';
@@ -27,7 +28,7 @@ import { MatriculasModule } from '../matriculas/matriculas.module';
     ]),
     MatriculasModule,
   ],
-  controllers: [CursosController],
+  controllers: [CursosController, IaController],
   providers: [
     CursosService,
     AgenteIAService,
