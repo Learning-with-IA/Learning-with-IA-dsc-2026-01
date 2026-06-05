@@ -35,7 +35,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Criar usuário administrativamente (Apenas ADMIN)' })
   @ApiResponse({ status: 201, description: 'Usuário criado com sucesso.' })
   @ApiResponse({ status: 403, description: 'Acesso proibido.' })
-  create(@Body() createUserDto: CreateUserDto): Promise<User> {
+  create(@Body() createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
     return this.usersService.create(createUserDto);
   }
 
@@ -58,7 +58,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Obter dados de um usuário por ID (ADMIN ou Próprio Usuário)' })
   @ApiResponse({ status: 200, description: 'Dados do usuário retornados com sucesso.' })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
-  findOne(@Param('id') id: string, @Req() req: any): Promise<User> {
+  findOne(@Param('id') id: string, @Req() req: any): Promise<Omit<User, 'password'>> {
     if (req.user.role !== UserRole.ADMIN && req.user.id !== id) {
       throw new ForbiddenException('Acesso negado. Você só pode visualizar seu próprio perfil.');
     }
@@ -76,7 +76,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
     @Req() req: any,
-  ): Promise<User> {
+  ): Promise<Omit<User, 'password'>> {
     if (req.user.role !== UserRole.ADMIN && req.user.id !== id) {
       throw new ForbiddenException('Acesso negado. Você só pode editar seu próprio perfil.');
     }
@@ -95,7 +95,7 @@ export class UsersController {
   updateStatus(
     @Param('id') id: string,
     @Body('isActive') isActive: boolean,
-  ): Promise<User> {
+  ): Promise<Omit<User, 'password'>> {
     return this.usersService.updateStatus(id, isActive);
   }
 

@@ -1,0 +1,141 @@
+# ==============================================================================
+# Fluxo de Teste: Autenticação, Autorização e Segurança (UC03 & UC05)
+# ==============================================================================
+# Este arquivo contém a sequência estruturada de requisições HTTP para validar
+# o cadastro, login, tokens JWT e autorização baseada em papéis (RBAC).
+#
+# Para rodar estes testes, instale a extensão "REST Client" no VS Code e certifique-se
+# de que a API está rodando localmente (pnpm start:dev).
+# ==============================================================================
+
+@baseUrl = http://localhost:3000
+@invalidToken = token_totalmente_invalido_ou_expirado
+
+# ==============================================================================
+# 1. Cadastro de Usuários (Fase de Registro)
+# ==============================================================================
+
+### 1.1. Cadastro de Usuário Comum (STUDENT)
+# Cadastra uma nova conta de estudante. A resposta não deve conter o campo "password".
+POST {{baseUrl}}/api/v1/auth/signup
+Content-Type: application/json
+
+{
+  "name": "Marina Alves",
+  "email": "marina.alves@example.com",
+  "password": "password123",
+  "phone": "11999999999"
+}
+
+### 1.2. Cadastro de Outro Usuário (Para testes administrativos ou de duplicidade)
+# Tentar cadastrar com o mesmo e-mail acima deve resultar em 409 Conflict.
+POST {{baseUrl}}/api/v1/auth/signup
+Content-Type: application/json
+
+{
+  "name": "Marina Alves Duplicada",
+  "email": "marina.alves@example.com",
+  "password": "password123"
+}
+
+
+# ==============================================================================
+# 2. Login e Autenticação (Fase de Login)
+# ==============================================================================
+
+### 2.1. Login com Senha Incorreta (Espera 401 Unauthorized)
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "marina.alves@example.com",
+  "password": "senhaIncorreta"
+}
+
+### 2.2. Login com E-mail Inexistente (Espera 401 Unauthorized)
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "inexistente@example.com",
+  "password": "password123"
+}
+
+### 2.3. Login do Usuário Comum - Sucesso
+# Cole o token retornado como "accessToken" na variável @userToken abaixo.
+# A resposta conterá "accessToken", "access_token" e dados do usuário (sem password).
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "marina.alves@example.com",
+  "password": "password123"
+}
+
+###
+
+@userToken = COLOQUE_O_TOKEN_DO_USUARIO_COMUM_AQUI
+
+### 2.4. Login do Usuário Administrador (ADMIN)
+# Nota: Para obter um token de administrador, você pode usar as credenciais 
+# de um admin já cadastrado no banco (ex: "admin@example.com" / "password123").
+# Cole o token retornado como "accessToken" na variável @adminToken abaixo.
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "password123"
+}
+
+###
+
+@adminToken = COLOQUE_O_TOKEN_DO_ADMINISTRADOR_AQUI
+
+
+# ==============================================================================
+# 3. Rotas Protegidas (Fase de Perfil)
+# ==============================================================================
+
+### 3.1. Acesso ao Perfil Sem Token (Espera 401 Unauthorized)
+GET {{baseUrl}}/api/v1/auth/profile
+
+### 3.2. Acesso ao Perfil com Token Inválido (Espera 401 Unauthorized)
+GET {{baseUrl}}/api/v1/auth/profile
+Authorization: Bearer {{invalidToken}}
+
+### 3.3. Acesso ao Perfil com Header Incorreto / Sem Prefixo Bearer (Espera 401 Unauthorized)
+GET {{baseUrl}}/api/v1/auth/profile
+Authorization: {{userToken}}
+
+### 3.4. Acesso ao Perfil com Token de Usuário Comum (Espera 200 OK com dados do perfil)
+GET {{baseUrl}}/api/v1/auth/profile
+Authorization: Bearer {{userToken}}
+
+
+# ==============================================================================
+# 4. Autorização por Perfil - RBAC (Restrições de Acesso)
+# ==============================================================================
+
+### 4.1. Usuário Comum acessa rota de Admin (Espera 403 Forbidden)
+# Rota GET /api/v1/users é restrita a administradores.
+GET {{baseUrl}}/api/v1/users
+Authorization: Bearer {{userToken}}
+
+### 4.2. Administrador acessa rota de Admin (Espera 200 OK com lista sem senhas)
+GET {{baseUrl}}/api/v1/users
+Authorization: Bearer {{adminToken}}
+
+
+# ==============================================================================
+# 5. Controle de Sessão e Invalidação de Tokens
+# ==============================================================================
+
+### 5.1. Logout do Usuário (Espera 200 OK)
+# Invalida o token JWT adicionando-o na blacklist local.
+POST {{baseUrl}}/api/v1/auth/logout
+Authorization: Bearer {{userToken}}
+
+### 5.2. Re-tentativa de Acesso ao Perfil com Token Deslogado (Espera 401 Unauthorized)
+GET {{baseUrl}}/api/v1/auth/profile
+Authorization: Bearer {{userToken}}

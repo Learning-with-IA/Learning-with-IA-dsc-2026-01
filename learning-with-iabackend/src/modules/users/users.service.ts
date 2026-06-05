@@ -11,28 +11,35 @@ export class UsersService {
     private readonly usersRepository: IUserRepository,
   ) {}
 
+  private removePassword(user: User): Omit<User, 'password'> {
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
+
   // CREATE - POST /users (Criar usuário administrativamente)
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     const userToSave = {
       ...createUserDto,
       password: hashedPassword,
     };
-    return this.usersRepository.salvar(userToSave);
+    const saved = await this.usersRepository.salvar(userToSave);
+    return this.removePassword(saved);
   }
 
   // READ ALL - GET /users
-  async findAll(): Promise<User[]> {
-    return this.usersRepository.buscarTodos();
+  async findAll(): Promise<Omit<User, 'password'>[]> {
+    const users = await this.usersRepository.buscarTodos();
+    return users.map((u) => this.removePassword(u));
   }
 
   // READ PAGINATED WITH FILTERS - GET /users (Paginado com query params)
-  async findPaginated(filtros: GetUsersFilterDto) {
+  async findPaginated(filtros: GetUsersFilterDto): Promise<{ data: Omit<User, 'password'>[]; meta: any }> {
     const { data, total } = await this.usersRepository.buscarComFiltros(filtros);
     const limit = filtros.limit || 10;
     const page = filtros.page || 1;
     return {
-      data,
+      data: data.map((u) => this.removePassword(u)),
       meta: {
         total,
         page,
@@ -43,7 +50,7 @@ export class UsersService {
   }
 
   // READ BY ID - GET /users/:id
-  async findOne(id: string): Promise<User> {
+  async findOne(id: string): Promise<Omit<User, 'password'>> {
     const user = await this.usersRepository.buscarPorId(id);
 
     if (!user) {
@@ -52,33 +59,52 @@ export class UsersService {
       );
     }
 
-    return user;
+    return this.removePassword(user);
   }
 
   // UPDATE - PATCH /users/:id
   async update(
     id: string,
     updateUserDto: UpdateUserDto,
-  ): Promise<User> {
-    const user = await this.findOne(id);
+  ): Promise<Omit<User, 'password'>> {
+    const user = await this.usersRepository.buscarPorId(id);
+    if (!user) {
+      throw new NotFoundException(
+        `Usuário com ID "${id}" não foi encontrado.`,
+      );
+    }
     
-    // Ignorar e-mail e senha por esta rota (possuem fluxos próprios)
-    const { email, password, ...updateData } = updateUserDto;
+    const updateData = { ...updateUserDto };
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 10);
+    }
     
     Object.assign(user, updateData);
-    return this.usersRepository.salvar(user);
+    const saved = await this.usersRepository.salvar(user);
+    return this.removePassword(saved);
   }
 
   // UPDATE STATUS - PATCH /users/:id/status
-  async updateStatus(id: string, isActive: boolean): Promise<User> {
-    const user = await this.findOne(id);
+  async updateStatus(id: string, isActive: boolean): Promise<Omit<User, 'password'>> {
+    const user = await this.usersRepository.buscarPorId(id);
+    if (!user) {
+      throw new NotFoundException(
+        `Usuário com ID "${id}" não foi encontrado.`,
+      );
+    }
     user.isActive = isActive;
-    return this.usersRepository.salvar(user);
+    const saved = await this.usersRepository.salvar(user);
+    return this.removePassword(saved);
   }
 
   // DELETE - DELETE /users/:id
   async remove(id: string): Promise<{ message: string }> {
-    const user = await this.findOne(id);
+    const user = await this.usersRepository.buscarPorId(id);
+    if (!user) {
+      throw new NotFoundException(
+        `Usuário com ID "${id}" não foi encontrado.`,
+      );
+    }
     await this.usersRepository.remover(user);
     return { message: `Usuário com ID "${id}" removido com sucesso.` };
   }

@@ -71,6 +71,26 @@ cursos/
 
 ## 🔌 Endpoints Principais
 
+### Autenticação (Auth)
+```http
+POST   /api/v1/auth/signup          → Registrar um novo estudante (STUDENT)
+POST   /api/v1/auth/login           → Login e obtenção do token JWT (Retorna accessToken/access_token)
+POST   /api/v1/auth/logout          → Invalidação do token JWT (Controle de sessão/Blacklist)
+GET    /api/v1/auth/profile         → Obter dados do perfil autenticado
+POST   /api/v1/auth/forgot-password → Solicitar redefinição de senha
+POST   /api/v1/auth/reset-password  → Redefinir senha usando token temporário
+```
+
+### Gestão de Usuários (Users)
+```http
+POST   /api/v1/users                → Criar usuário administrativamente (Apenas ADMIN)
+GET    /api/v1/users                → Listar usuários paginados com filtros (Apenas ADMIN)
+GET    /api/v1/users/:id            → Obter detalhes de um usuário (ADMIN ou próprio Usuário)
+PATCH  /api/v1/users/:id            → Atualizar dados cadastrais e senha (ADMIN ou próprio Usuário)
+PATCH  /api/v1/users/:id/status     → Ativar/Desativar usuário logicamente (Apenas ADMIN)
+DELETE /api/v1/users/:id            → Remover permanentemente um usuário (ADMIN ou próprio Usuário)
+```
+
 ### Listar Cursos
 ```http
 GET /api/v1/cursos
@@ -78,17 +98,17 @@ GET /api/v1/cursos
 
 ### Gerenciar Conteúdo do Curso
 ```http
-POST   /api/v1/cursos/:cursoId/conteudo       → Adicionar material
-GET    /api/v1/cursos/:cursoId/conteudo       → Listar materiais
+POST   /api/v1/cursos/:cursoId/conteudo      → Adicionar material
+GET    /api/v1/cursos/:cursoId/conteudo      → Listar materiais
 PATCH  /api/v1/cursos/:cursoId/conteudo/:id  → Atualizar material
 DELETE /api/v1/cursos/:cursoId/conteudo/:id  → Deletar material
 ```
 
-### Agente de IA
+### Agente de IA (Consulta ao Agente)
 ```http
-POST   /api/v1/cursos/:cursoId/agente/inicializar    → Criar agente
-GET    /api/v1/cursos/:cursoId/agente                → Obter config
-POST   /api/v1/cursos/:cursoId/agente/query          → Query (❌ MOCK)
+POST   /api/v1/ia/chat                       → Interagir com o agente de IA do curso (UC07)
+POST   /api/v1/cursos/:cursoId/agente/inicializar   → Criar agente do curso
+GET    /api/v1/cursos/:cursoId/agente               → Obter config do agente
 GET    /api/v1/cursos/:cursoId/agente/historico/:uid → Histórico
 ```
 
@@ -99,10 +119,9 @@ GET    /api/v1/cursos/:cursoId/agente/historico/:uid → Histórico
 | GPT-4 | 🚧 TODO | OpenAI API |
 | GPT-3.5 | 🚧 TODO | OpenAI API |
 | Claude | 🚧 TODO | Anthropic API |
-| LLAMA | 🚧 TODO | HuggingFace / Local |
-| Custom | 🚧 TODO | Extensível |
+| Gemini | ✅ Ativo | Google Generative AI API (Usado na UC07) |
 
-> ⚠️ **Atualmente**: Respostas são simuladas (mock). Integração com LLM está scaffolded em `agente-ia.service.ts`
+---
 
 ## 🚀 Como Rodar
 
@@ -128,12 +147,19 @@ pnpm start:dev
 ```bash
 # Listar cursos
 curl http://localhost:3000/api/v1/cursos
-
-# Query agente (mock)
-curl -X POST http://localhost:3000/api/v1/cursos/<id>/agente/query \
-  -H "Content-Type: application/json" \
-  -d '{"pergunta": "O que é programação?"}'
 ```
+
+---
+
+## 🛠️ Como Testar com o REST Client (VS Code)
+
+Para testar o fluxo de autenticação e autorização ponta a ponta sem o frontend:
+1. Instale a extensão **REST Client** no VS Code.
+2. Certifique-se de que a API e o banco de dados estejam rodando.
+3. Abra o arquivo [requests/auth-flow.http](file:///c:/Users/guilh/Documents/trabalho/Learning-with-IA-dsc-2026-01/learning-with-iabackend/requests/auth-flow.http) e execute as requisições sequencialmente clicando em `Send Request` acima de cada endpoint.
+4. Siga as instruções no arquivo para copiar o `accessToken` obtido e atualizar as variáveis `@userToken` e `@adminToken`.
+
+---
 
 ## 📋 Checklist de Implementação
 
@@ -141,40 +167,43 @@ curl -X POST http://localhost:3000/api/v1/cursos/<id>/agente/query \
 - ✅ DTOs para validação
 - ✅ Service com lógica de orquestração
 - ✅ Controller com endpoints
-- ✅ Scaffolding de integração com IA
-- 🚧 Integração com OpenAI/Claude/LLAMA
-- 🚧 Autenticação de alunos
-- 🚧 Guards de autorização (RN01)
-- 🚧 Rate limiting
-- 🚧 Testes unitários
-- 🚧 Testes E2E
+- ✅ Autenticação de usuários com JWT e segurança de senhas (hash com bcrypt)
+- ✅ Guards de autorização baseados em papéis/RBAC (ADMIN, STUDENT, TEACHER)
+- ✅ Endpoint GET /api/v1/auth/profile para recuperar dados do token
+- ✅ Omissão automática de senhas nas respostas de usuários
+- ✅ Integração com IA (Google Gemini na UC07 - Consulta ao Agente)
+- ✅ RN01: Validação de Matrícula Ativa para conversar com o agente
+- ✅ RN03: Todos os cursos são gratuitos (Payment)
+- ✅ Testes unitários completos
+- ✅ Testes E2E (de integração) completos
+
+---
 
 ## 🔐 Regras de Negócio
 
 **RN01**: Apenas alunos com matrícula ativa podem usar o agente
-- 🚧 TODO: Validar status de matrícula antes de query
+- ✅ Validado no service `CursosService` / endpoint `POST /api/v1/ia/chat`
 
 **RN03**: Todos os cursos são gratuitos
-- ✅ Implementado no Payment
+- ✅ Implementado no módulo de pagamentos
 
-## 📚 Próximos Passos
-
-1. **Autenticação JWT** → Adicionar guards para validar token
-2. **Integração LLM** → Implementar chamadas reais aos modelos
-3. **Cache de Respostas** → Redis para respostas frequentes
-4. **Validação de Contexto** → Garantir resposta dentro do escopo
-5. **Testes** → Unit + E2E completos
-6. **API Docs** → Swagger/OpenAPI
+---
 
 ## 📝 Variáveis de Ambiente
 
+Configure as seguintes variáveis no arquivo `.env` na raiz do backend:
+
 ```env
-# Database
+# Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=postgres
 DB_NAME=learning_db
+
+# Security & JWT Configuration
+JWT_SECRET=sua_chave_secreta_super_segura_aqui
+JWT_EXPIRES_IN=1d
 
 # OpenAI
 OPENAI_API_KEY=sk_...
@@ -182,9 +211,11 @@ OPENAI_API_KEY=sk_...
 # Anthropic
 ANTHROPIC_API_KEY=sk-ant-...
 
-# LLAMA (se usar local)
-LLAMA_HOST=http://localhost:8000
+# Google Gemini / Generative AI
+GEMINI_API_KEY=sua_chave_da_gemini_aqui
 ```
+
+---
 
 ## 👥 Arquitetura Organizacional
 
