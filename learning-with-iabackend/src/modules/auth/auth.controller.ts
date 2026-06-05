@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Req, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Req, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignUpDto, LoginDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -8,6 +8,16 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 @Controller('api/v1/auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Obter dados do usuário autenticado a partir do token' })
+  @ApiResponse({ status: 200, description: 'Dados do perfil retornados com sucesso.' })
+  @ApiResponse({ status: 401, description: 'Não autorizado ou token inválido.' })
+  getProfile(@Req() req: any) {
+    return req.user;
+  }
 
   @Post('signup')
   @ApiOperation({ summary: 'Registrar um novo usuário' })
