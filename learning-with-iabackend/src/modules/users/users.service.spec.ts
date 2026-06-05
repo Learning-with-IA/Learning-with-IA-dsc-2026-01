@@ -10,22 +10,27 @@ jest.mock('bcrypt');
 describe('UsersService', () => {
   let service: UsersService;
   let mockUserRepository: jest.Mocked<IUserRepository>;
-
-  const mockUser: User = {
-    id: 'user-id-1',
-    name: 'John Doe',
-    email: 'john@example.com',
-    password: 'hashedpassword',
-    phone: '12345678',
-    role: UserRole.STUDENT,
-    isActive: true,
-    recoveryToken: null,
-    recoveryTokenExpires: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+  let mockUser: User;
+  let mockUserWithoutPassword: Omit<User, 'password'>;
 
   beforeEach(async () => {
+    mockUser = {
+      id: 'user-id-1',
+      name: 'John Doe',
+      email: 'john@example.com',
+      password: 'hashedpassword',
+      phone: '12345678',
+      role: UserRole.STUDENT,
+      isActive: true,
+      recoveryToken: null,
+      recoveryTokenExpires: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const { password, ...rest } = mockUser;
+    mockUserWithoutPassword = rest;
+
     mockUserRepository = {
       salvar: jest.fn(),
       buscarTodos: jest.fn(),
@@ -65,7 +70,7 @@ describe('UsersService', () => {
       mockUserRepository.salvar.mockResolvedValueOnce(mockUser);
 
       const result = await service.create(dto);
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual(mockUserWithoutPassword);
       expect(bcrypt.hash).toHaveBeenCalledWith(dto.password, 10);
       expect(mockUserRepository.salvar).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -87,7 +92,7 @@ describe('UsersService', () => {
       const result = await service.findPaginated(filtros);
 
       expect(result).toEqual({
-        data: [mockUser],
+        data: [mockUserWithoutPassword],
         meta: {
           total: 1,
           page: 1,
@@ -104,7 +109,7 @@ describe('UsersService', () => {
       mockUserRepository.buscarPorId.mockResolvedValueOnce(mockUser);
 
       const result = await service.findOne('user-id-1');
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual(mockUserWithoutPassword);
       expect(mockUserRepository.buscarPorId).toHaveBeenCalledWith('user-id-1');
     });
 
@@ -116,7 +121,7 @@ describe('UsersService', () => {
   });
 
   describe('update', () => {
-    it('deve atualizar um usuário existente ignorando email e password', async () => {
+    it('deve atualizar um usuário existente, aplicando hash na nova senha se fornecida', async () => {
       const dto = {
         name: 'John Updated',
         email: 'attacker@example.com',
@@ -124,19 +129,27 @@ describe('UsersService', () => {
       };
 
       mockUserRepository.buscarPorId.mockResolvedValueOnce(mockUser);
+      (bcrypt.hash as jest.Mock).mockResolvedValueOnce('newhashedpassword');
       mockUserRepository.salvar.mockResolvedValueOnce({
         ...mockUser,
         name: 'John Updated',
+        email: 'attacker@example.com',
+        password: 'newhashedpassword',
       });
 
       const result = await service.update('user-id-1', dto);
 
-      expect(result.name).toBe('John Updated');
+      expect(result).toEqual({
+        ...mockUserWithoutPassword,
+        name: 'John Updated',
+        email: 'attacker@example.com',
+      });
+      expect(bcrypt.hash).toHaveBeenCalledWith('attackpassword', 10);
       expect(mockUserRepository.salvar).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'John Updated',
-          email: mockUser.email,       // e-mail original inalterado
-          password: mockUser.password, // senha original inalterada
+          email: 'attacker@example.com',
+          password: 'newhashedpassword',
         }),
       );
     });
@@ -152,7 +165,10 @@ describe('UsersService', () => {
 
       const result = await service.updateStatus('user-id-1', false);
 
-      expect(result.isActive).toBe(false);
+      expect(result).toEqual({
+        ...mockUserWithoutPassword,
+        isActive: false,
+      });
       expect(mockUserRepository.salvar).toHaveBeenCalledWith(
         expect.objectContaining({
           isActive: false,
