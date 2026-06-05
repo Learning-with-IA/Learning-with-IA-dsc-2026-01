@@ -109,7 +109,17 @@ describe('AuthService', () => {
 
       const result = await service.login(loginDto);
 
-      expect(result).toEqual({ accessToken: 'mocked-jwt-token' });
+      expect(result).toEqual({
+        accessToken: 'mocked-jwt-token',
+        access_token: 'mocked-jwt-token',
+        user: {
+          id: mockUser.id,
+          userId: mockUser.id,
+          name: mockUser.name,
+          email: mockUser.email,
+          role: mockUser.role,
+        },
+      });
       expect(mockUserRepository.buscarPorEmail).toHaveBeenCalledWith(loginDto.email);
       expect(bcrypt.compare).toHaveBeenCalledWith(loginDto.password, mockUser.password);
       expect(mockJwtService.sign).toHaveBeenCalledWith({

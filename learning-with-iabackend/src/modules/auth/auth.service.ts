@@ -35,7 +35,7 @@ export class AuthService {
     return this.userRepository.salvar(newUser);
   }
 
-  async login(loginDto: LoginDto): Promise<{ accessToken: string }> {
+  async login(loginDto: LoginDto): Promise<any> {
     const user = await this.userRepository.buscarPorEmail(loginDto.email);
     if (!user) {
       throw new UnauthorizedException('Credenciais inválidas.');
@@ -53,7 +53,17 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload);
-    return { accessToken };
+    return {
+      accessToken,
+      access_token: accessToken,
+      user: {
+        id: user.id,
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    };
   }
 
   async logout(token: string): Promise<void> {
