@@ -74,7 +74,7 @@ Content-Type: application/json
 
 ###
 
-@userToken = COLOQUE_O_TOKEN_DO_USUARIO_COMUM_AQUI
+@userToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjZTNkZjgxYS1hZTU0LTRlZGYtYWFjMS0yZDVkZTYwMDc3NmYiLCJlbWFpbCI6Im1hcmluYS5hbHZlc0BleGFtcGxlLmNvbSIsInJvbGUiOiJTVFVERU5UIiwiaWF0IjoxNzgwOTE4OTQ4LCJleHAiOjE3ODEwMDUzNDh9.wLGtsIhVVqORXGu2PMFdBte0QeJBNArRztaFMMua4xg
 
 ### 2.4. Login do Usuário Administrador (ADMIN)
 # Nota: Para obter um token de administrador, você pode usar as credenciais 
@@ -90,7 +90,7 @@ Content-Type: application/json
 
 ###
 
-@adminToken = COLOQUE_O_TOKEN_DO_ADMINISTRADOR_AQUI
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzYzM2MzFlMS0wM2M3LTQwNjgtYTY3ZC0wNDM3ZDAyN2VlMjIiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzgwOTE4OTM0LCJleHAiOjE3ODEwMDUzMzR9.RQdS88_WkB26HA09f4xjd2gsOY4N3nj2LGLDkKgCur0
 
 
 # ==============================================================================

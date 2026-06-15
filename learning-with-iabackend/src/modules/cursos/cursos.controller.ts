@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Param, Patch, Delete, HttpCode, HttpStatus, ForbiddenException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { CursosService } from './cursos.service';
 import { AgenteIAService } from './services/agente-ia.service';
 import { MatriculasService } from '../matriculas/matriculas.service';
@@ -6,6 +7,7 @@ import { CursoResponseDto } from './dto/curso-response.dto';
 import { CreateCursoConteudoDto, UpdateCursoConteudoDto, CursoConteudoResponseDto } from './dto/curso-conteudo.dto';
 import { CreateCursoAgenteDto, QueryAgenteDto, CursoAgenteResponseDto, RespostaAgenteDto } from './dto/curso-agente.dto';
 
+@ApiTags('Cursos')
 @Controller('api/v1/cursos')
 export class CursosController {
   constructor(
@@ -16,6 +18,8 @@ export class CursosController {
 
   // ========== CURSOS ==========
   @Get()
+  @ApiOperation({ summary: 'Listar todos os cursos ativos' })
+  @ApiResponse({ status: 200, description: 'Lista de cursos ativos retornada com sucesso.', type: [CursoResponseDto] })
   async listarCursos(): Promise<CursoResponseDto[]> {
     const cursos = await this.cursosService.listarCursosAtivos();
     return cursos.map(({ id, nome, descricao, cargaHoraria, imagemUrl }) => ({
@@ -28,6 +32,10 @@ export class CursosController {
   }
 
   @Get(':cursoId')
+  @ApiOperation({ summary: 'Obter detalhes de um curso por ID' })
+  @ApiParam({ name: 'cursoId', description: 'ID do curso (UUID)' })
+  @ApiResponse({ status: 200, description: 'Detalhes do curso retornados com sucesso.', type: CursoResponseDto })
+  @ApiResponse({ status: 404, description: 'Curso não encontrado.' })
   async obterCurso(@Param('cursoId') cursoId: string): Promise<CursoResponseDto> {
     const curso = await this.cursosService.obterCurso(cursoId);
     return {
@@ -41,6 +49,10 @@ export class CursosController {
 
   // ========== CONTEÚDO ==========
   @Post(':cursoId/conteudo')
+  @ApiOperation({ summary: 'Adicionar conteúdo a um curso' })
+  @ApiParam({ name: 'cursoId', description: 'ID do curso (UUID)' })
+  @ApiResponse({ status: 201, description: 'Conteúdo adicionado com sucesso.', type: CursoConteudoResponseDto })
+  @ApiResponse({ status: 404, description: 'Curso não encontrado.' })
   async adicionarConteudo(
     @Param('cursoId') cursoId: string,
     @Body() dto: CreateCursoConteudoDto,
@@ -58,6 +70,10 @@ export class CursosController {
   }
 
   @Get(':cursoId/conteudo')
+  @ApiOperation({ summary: 'Listar conteúdos de um curso' })
+  @ApiParam({ name: 'cursoId', description: 'ID do curso (UUID)' })
+  @ApiResponse({ status: 200, description: 'Lista de conteúdos retornada com sucesso.', type: [CursoConteudoResponseDto] })
+  @ApiResponse({ status: 404, description: 'Curso não encontrado.' })
   async listarConteudo(
     @Param('cursoId') cursoId: string,
   ): Promise<CursoConteudoResponseDto[]> {
@@ -74,6 +90,11 @@ export class CursosController {
   }
 
   @Patch(':cursoId/conteudo/:conteudoId')
+  @ApiOperation({ summary: 'Atualizar conteúdo de um curso' })
+  @ApiParam({ name: 'cursoId', description: 'ID do curso (UUID)' })
+  @ApiParam({ name: 'conteudoId', description: 'ID do conteúdo (UUID)' })
+  @ApiResponse({ status: 200, description: 'Conteúdo atualizado com sucesso.', type: CursoConteudoResponseDto })
+  @ApiResponse({ status: 404, description: 'Curso ou conteúdo não encontrado.' })
   async atualizarConteudo(
     @Param('cursoId') cursoId: string,
     @Param('conteudoId') conteudoId: string,
@@ -93,6 +114,11 @@ export class CursosController {
 
   @Delete(':cursoId/conteudo/:conteudoId')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Remover conteúdo de um curso' })
+  @ApiParam({ name: 'cursoId', description: 'ID do curso (UUID)' })
+  @ApiParam({ name: 'conteudoId', description: 'ID do conteúdo (UUID)' })
+  @ApiResponse({ status: 204, description: 'Conteúdo removido com sucesso.' })
+  @ApiResponse({ status: 404, description: 'Curso ou conteúdo não encontrado.' })
   async deletarConteudo(
     @Param('cursoId') cursoId: string,
     @Param('conteudoId') conteudoId: string,
@@ -102,6 +128,10 @@ export class CursosController {
 
   // ========== AGENTE DE IA ==========
   @Post(':cursoId/agente/inicializar')
+  @ApiOperation({ summary: 'Inicializar agente de IA para o curso' })
+  @ApiParam({ name: 'cursoId', description: 'ID do curso (UUID)' })
+  @ApiResponse({ status: 201, description: 'Agente inicializado com sucesso.', type: CursoAgenteResponseDto })
+  @ApiResponse({ status: 404, description: 'Curso não encontrado.' })
   async inicializarAgente(
     @Param('cursoId') cursoId: string,
     @Body() dto?: CreateCursoAgenteDto,
@@ -119,6 +149,10 @@ export class CursosController {
   }
 
   @Get(':cursoId/agente')
+  @ApiOperation({ summary: 'Obter agente de IA do curso' })
+  @ApiParam({ name: 'cursoId', description: 'ID do curso (UUID)' })
+  @ApiResponse({ status: 200, description: 'Dados do agente retornados com sucesso.', type: CursoAgenteResponseDto })
+  @ApiResponse({ status: 404, description: 'Curso não encontrado.' })
   async obterAgente(@Param('cursoId') cursoId: string): Promise<CursoAgenteResponseDto> {
     const agente = await this.cursosService.obterAgente(cursoId);
     return {
@@ -134,6 +168,12 @@ export class CursosController {
 
   // ========== QUERY DO AGENTE ==========
   @Post(':cursoId/agente/query')
+  @ApiOperation({ summary: 'Enviar pergunta ao agente de IA do curso' })
+  @ApiParam({ name: 'cursoId', description: 'ID do curso (UUID)' })
+  @ApiResponse({ status: 201, description: 'Resposta do agente retornada com sucesso.', type: RespostaAgenteDto })
+  @ApiResponse({ status: 400, description: 'Agente sem conteúdo de treinamento.' })
+  @ApiResponse({ status: 403, description: 'Matrícula ativa necessária para usar o agente.' })
+  @ApiResponse({ status: 404, description: 'Curso não encontrado.' })
   async queryAgente(
     @Param('cursoId') cursoId: string,
     @Body() dto: QueryAgenteDto,
@@ -165,6 +205,10 @@ export class CursosController {
 
   // ========== HISTÓRICO ==========
   @Get(':cursoId/agente/historico/:usuarioId')
+  @ApiOperation({ summary: 'Obter histórico de interações do aluno com o agente' })
+  @ApiParam({ name: 'cursoId', description: 'ID do curso (UUID)' })
+  @ApiParam({ name: 'usuarioId', description: 'ID do usuário (UUID)' })
+  @ApiResponse({ status: 200, description: 'Histórico de interações retornado com sucesso.' })
   async obterHistorico(
     @Param('cursoId') cursoId: string,
     @Param('usuarioId') usuarioId: string,

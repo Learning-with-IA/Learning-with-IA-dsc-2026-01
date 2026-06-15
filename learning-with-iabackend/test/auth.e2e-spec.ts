@@ -117,4 +117,47 @@ describe('AuthController (e2e)', () => {
         .expect(401);
     });
   });
+
+  describe('/api/v1/auth/signup — validação de payload', () => {
+    it('deve retornar 400 quando campos obrigatórios estão ausentes', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/signup')
+        .send({ name: 'Sem Email Nem Senha' })
+        .expect(400);
+    });
+
+    it('deve retornar 400 quando a senha é curta demais', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/signup')
+        .send({ name: 'Teste', email: 'short@email.com', password: '123' })
+        .expect(400);
+    });
+  });
+
+  describe('/api/v1/auth/profile — rotas protegidas', () => {
+    it('deve retornar 401 quando não há token de autenticação', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/auth/profile')
+        .expect(401);
+    });
+
+    it('deve retornar 200 e dados do usuário com token válido', async () => {
+      const loginResponse = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send({
+          email: 'jane@example.com',
+          password: 'password123',
+        });
+
+      const token = loginResponse.body.accessToken;
+
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/auth/profile')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('email');
+      expect(response.body.email).toBe('jane@example.com');
+    });
+  });
 });
