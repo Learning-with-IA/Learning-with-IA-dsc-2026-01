@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+
+  # ─── Banco de Dados ──────────────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: learning_postgres_db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=learning_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # ─── API NestJS ───────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./learning-with-iabackend
+      dockerfile: Dockerfile
+    container_name: learning_nestjs_api
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=learning_db
+    depends_on:
+      - db
+
+  # ─── Frontend React + Vite ────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./learning-with-iafrontend
+      dockerfile: Dockerfile.dev
+    container_name: learning_frontend
+    ports:
+      - "5173:5173"
+    develop:
+      watch:
+        - action: sync
+          path: ./learning-with-iafrontend/src
+          target: /app/src
+          ignore:
+            - node_modules/
+        - action: sync
+          path: ./learning-with-iafrontend/public
+          target: /app/public
+        - action: rebuild
+          path: ./learning-with-iafrontend/package.json
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
